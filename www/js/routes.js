@@ -1,12 +1,11 @@
-
-var routes = [
+const routes = [
   {
     path: '/',
     url: './index.html',
   },
   {
-    path: '/auth',
-    componentUrl: './pages/auth.html',
+    path: '/profile/:objectId',
+    componentUrl: './pages/profile.html',
   },
   {
     path: '(.*)',

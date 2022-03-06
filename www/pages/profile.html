@@ -1,0 +1,91 @@
+<template>
+  <div class="page">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner sliding">
+        <div class="title">プロフィール</div>
+      </div>
+    </div>
+    <div class="page-content">
+			<div class="block text-center">
+				${ image ?
+					$h`<img class="profileImage" src=${image} />`
+					:
+					$h`<i class="f7-icons size-250">person_alt_circle</i>`
+				}
+			</div>
+			<div class="block block-strong no-hairlines text-center">
+				${profile.displayName}
+			</div>
+			<div class="block no-hairlines">
+				<p innerHTML="${marked.parse(profile.profile || '')}">
+				</p>
+			</div>
+    </div>
+  </div>
+</template>
+<style>
+	.text-center {
+		text-align: center;
+	}
+  .size-250 {
+    font-size: 250px;
+  }
+	.profileImage {
+		object-fit: cover;
+		width: 250px;
+		height: 250px;
+		border-radius: 50%;
+		border: 1px #efeff4 solid;
+	}
+</style>
+<script>
+  export default function (props, {$f7, $f7router, $update, $onMounted, $on, $tick }) {
+    // NCMBが初期化されているかチェックします
+    if (typeof ncmb === 'undefined') throw 'NCMBが初期化されていません';
+		const Profile = ncmb.DataStore('Profile');
+		let profile = new Profile;
+		let image;
+		$onMounted(async () => {
+			profile = await Profile
+				.equalTo('objectId', props.objectId)
+				.fetch();
+			// プロフィールが存在しない場合
+			if (!profile.objectId) {
+				profile = {
+					displayName: 'User not found'
+				};
+			}
+			// 写真のダウンロードと設定（必要に応じて）
+			downloadPhoto();
+			// 表示を更新と、更新待ち
+			$update();
+		});
+
+		// 初期表示時にプロフィール画像をダウンロードする関数
+		// 不要であればdownloadPhotoの呼び出しをコメントアウトしてください
+		const downloadPhoto = async () => {
+			// ファイル名がなければ実行しない
+			if (!profile.photo) return;
+			// Blobデータをダウンロード
+			const blob = await ncmb.File.download(profile.photo, 'blob');
+			// blobをdataURIに変換
+			image = await loadPhoto(blob);
+			// 表示更新
+			$update();
+		};
+
+		// 選択した写真を読み込む関数
+		const loadPhoto = (file) => {
+			return new Promise((res, rej) => {
+				const reader = new FileReader;
+				reader.addEventListener("load", () => {
+					res(reader.result);
+				}, false);
+				reader.readAsDataURL(file);
+			});
+		};
+
+		return $render;
+  }
+</script>
